@@ -1,0 +1,149 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+Spotify Data is being used
+
+Reading in the dataset below and showcasing columns via str
+```{r, echo=F}
+knitr::opts_chunk$set(fig.width = 7, fig.height = 4,
+                      message=FALSE, tidy.opts=list(width.cutoff=60)) 
+
+```
+
+```{r global_options, include = FALSE}
+```
+
+```{r}
+library('ggplot2') 
+library('tidyverse')
+songs <- read.csv('spotify_songs.csv')
+str(songs)
+```
+
+
+## Q2 Comparing Two Variances 
+
+Continuous variable being chosen is 'danceability'.
+Categorical variable being chosen is 'playlist_genre'
+
+Below we will showcase a jitter plot with these two variables
+
+```{r}
+ggplot(songs, aes(y=playlist_genre, x=(danceability), color=playlist_genre)) +
+  geom_jitter(alpha=.6) +
+  theme_light() +
+  theme(legend.position = 'none')+labs(x='danceability')
+```
+
+The two values from our categorical variable selected will be 'pop' and 'rap'
+These can be taken as our two samples.
+
+
+```{r}
+sample1 <- subset(songs, playlist_genre =='pop')$danceability
+sample2 <- subset(songs, playlist_genre  =='rap')$danceability
+```
+
+
+
+
+Now we will list the different null hypothesis which we will test.
+These are the hypothesis's for comparing our population variances.
+
+1. $H_0: \mu_1 = \mu_2 \Rightarrow \mu_1 - \mu_2 = 0$
+2. $H_0: \mu_1 - \mu_2 \geq 0$
+3. $H_0: \mu_1 - \mu_2 \leq 0$
+
+
+
+
+First Hypothesis Check
+```{r}
+var.test(sample1,sample2)
+```
+
+
+Since our p-value is very small, we will reject the hypothesis that
+danceability in both genres are the same.
+
+
+
+
+
+Second hypothesis check
+
+```{r}
+var.test(sample1,sample2, alternative = 'less')
+```
+
+This hypothesis is also rejected as our p-value is very small, we cannot say mean
+danceability in pop is higher than rap.
+
+
+
+
+
+Third hypothesis check
+
+```{r}
+var.test(sample1,sample2, alternative = 'greater')
+```
+
+With the p-value equal to 1, we thus cannot reject this hypothesis that the mean
+danceability for rap is higher than pop.
+
+\newpage
+## Q3 Comparing two population means
+
+
+Listing the three hypothesis:
+
+1. $H_0: \mu_1 = \mu_2 \Rightarrow \mu_1 - \mu_2 = 0$
+2. $H_0: \mu_1 - \mu_2 \geq 0$
+3. $H_0: \mu_1 - \mu_2 \leq 0$
+
+
+
+for our first text we know the the variances do not equal each other
+```{r}
+t.test(sample1,sample2, var.equal = F)
+
+```
+Given our low p-value we reject the null hypothesis of the two pop means are
+equal to each other.
+
+
+
+
+Now for our second hypothesis, we also had to reject this when testing the 
+variance, thus:
+
+```{r}
+t.test(sample1,sample2, var.equal = F, alternative = 'less')
+```
+
+Thus given our P-val, we reject the null hypothesis that pop has a higher
+danceability mean than rap.
+
+
+
+
+Final hypothesis check. In our variance check we were unable to reject the null
+hypothesis, thus var.equal = t.
+
+```{r}
+t.test(sample1,sample2, var.equal = T, alternative = 'greater')
+# var.equal = true as thus null hypothesis when testing variance was unable to
+# be rejected.
+```
+
+Thus, we cannot reject this hypothesis.
+
+
+
+
