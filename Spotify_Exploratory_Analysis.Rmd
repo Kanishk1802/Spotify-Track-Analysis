@@ -1,0 +1,294 @@
+---
+title: "MSCI 253 Lab 2"
+author: "Kanishk Dutta"
+date: "21/05/2021"
+output: pdf_document
+---
+
+For our lab exercise we will be using the Spotify Data. 
+
+First let's read in this dataset.
+I'll use head to ensure that this data is read in correctly and to take
+a look at some of the column names and the data in this csv.
+```{r}
+library('ggplot2') 
+Songs <- read.csv('spotify_songs.csv')
+head(Songs)
+
+```
+# Question 1
+
+Continuous variable being chosen: 'danceability'
+
+We will plot the histogram for this danceability variable below.
+```{r}
+ggplot(Songs) + geom_histogram(aes(x = danceability,y=stat(count)), 
+fill = 'Light Green', colour = 'black', alpha=1, bins =20) +
+    ggtitle('Histogram of track danceability') + theme_light()
+```
+
+## 1.1
+
+Examining the histogram for the danceability variable, it is apparent that
+the graph is left skewed. More tracks have a higher levels of danceability 
+rather than having low levels of danceability (which makes sense, artists will
+choose to make their tracks more danceable)
+
+Examining the tails of this distribution there is a slight irregularity in the 
+thickness at the right tail. (In normal distribution tails are
+to decrease uniformly ). Thinking about this it does make sense as there will 
+still be a substantial number of songs with a high amount of danceability
+rather than a substantial number with low danceability (left tail)
+
+Just by looking at this histogram it would be very hard to locate the quartiles
+of the plot with accuracy. If we were to estimate with just the hist plot
+25%: 0.5, Median: 0.65, 75%: 0.78. But these quartiles should be calculated for
+better accuracy or evaluated on quantile plots.
+
+We can take a look at these quartiles by using the function below as our
+histogram does not give us an accurate understanding on it's own:
+```{r}
+quantile(Songs$danceability)   # finding the quartiles
+```
+
+## 1.2
+
+Plotting the quantile plot for the danceability variable below
+
+Below we have plotted the histogram with the quantile (having values sorted
+within prob points of 0 to 1) alongside the boxplot.
+
+Below that is also the quantile plot with just the boxplot for a less cluttered
+view.
+
+```{r}
+ggplot(Songs) + 
+geom_histogram(aes(y=danceability, x = -..density..), alpha = .7, colour = 'white', bins=20,fill = 'blue') +
+geom_point(aes(y=sort(danceability), x=ppoints(danceability) ), colour='firebrick', alpha = .2, size =2 ) +
+geom_boxplot(aes(y=danceability,x = 1.25), width=.25)  + 
+  labs(x='Probability Points', y='Danceability Quantile') + theme_light()
+```
+
+```{r}
+ggplot(Songs) + 
+geom_point(aes(y=sort(danceability), x=ppoints(danceability) ),colour='firebrick', alpha = .2, size =2 ) +
+  geom_boxplot(aes(y=danceability,x = 1.25), width=.25)  + 
+  labs(x='Probability Points', y='Danceability Quantile') + theme_light()
+```
+Examining the quantile plot we see that it is slightly left-skewed. This is
+because there is a sparsity in points at the bottom (of y-axis) and towards the
+top the points are flatter (with a slight steepness at the top, thus only 
+slightly left-skewed)
+
+It is much easier to estimate where the quartiles are using the plot as we have
+the prob points on our x-axis to aid us. 
+  
+    The Median is at about 0.66, the first quartile at about 0.55 and the third
+    quartile at approx 0.76.
+
+
+## 1.3
+
+Below we utilize the fourmoments function to calculate the fourmoments for the 
+danceability variable from the spotify data.
+
+
+```{r}
+# adding the fourmoments function which we will use to learn more about our data
+library('moments')
+fourmoments <- function(rv){
+  c('Mean' = mean(rv), 
+    'Variance' = var(rv),
+    'Skewness' = skewness(rv),
+    'Kurtosis' = kurtosis(rv))
+}
+
+fourmoments(Songs$danceability)
+```
+
+Examining the skewness of this variable we have a value of -0.5044, which is 
+indicating that this is a left skewed distribution. 
+
+In terms of the thickness of the tails, we examine the Kurtosis which is of a 
+value of 3.01. The Kurtosis of a normal is 3, thus this being slightly higher
+this distribution is leptokurtic, having slightly thicker tails than normal.
+
+
+\newpage
+
+# Question 2
+
+Below we have chosen the variable 'liveness' which produces a 
+right skewed distribution. Below is the histogram to confirm this
+
+```{r}
+ggplot(Songs) + geom_histogram(aes(x = liveness,y=stat(count)), 
+fill = 'Light Green', colour = 'black', alpha=1, bins =20) +
+    ggtitle('Histogram of track liveness') + theme_light()
+
+```
+
+Now to use qqtest to evaluate how this variable fits within different types
+of distributions.
+
+Firstly checking the normal
+```{r}
+library('qqtest')
+qqtest(tail(Songs$liveness,300),dist = 'normal')
+```
+Evaluating the normal distribution it is hard to say that this of normal dist,
+at both tails the points are out of the tolerable range.
+
+Now evaluating the chi-squared plot
+
+```{r}
+library('qqtest')
+qqtest((tail(Songs$liveness,300))^2,dist = 'chi-squared')
+```
+Chi squared seems like a good fit, all of the points from our dataset are within
+the ranges of the function. (With furthest point bleeding just at edge)
+
+Let's continue to eval the other functions, log-normal below
+```{r}
+library('qqtest')
+qqtest(tail(Songs$liveness,300),dist = 'log-normal')
+```
+Log-normal is not a great fit for our data with many datapoints outside of 
+the ranges.
+
+
+Finally, we can evaluate the exponential dist.
+```{r}
+library('qqtest')
+qqtest(tail(Songs$liveness,300),dist = 'exponential')
+```
+The exponential (along with chi-squared) also has all of our data-points in the
+ranges. Both have slight deviations from the central range, we will continue 
+using the exponential.
+
+
+Below we will plot our ideal quantile with the sample quantile.
+We use qexp below.
+```{r}
+library('plotly')
+
+series <- ((Songs$danceability))
+probs    <- ppoints(series)
+q.exp <- qexp(probs)
+q.sample <- sort((Songs$danceability))
+
+
+ggplot() +
+  geom_point(aes(y = q.sample, x= probs) ,colour = 'steelblue', alpha = .2) +
+  geom_line(aes(y = q.exp, x = probs),colour = "black") +
+    labs(x = 'Probability Points', y= 'Sample Quantiles') 
+
+```
+
+Comparing the ideal line with the sample quantile line, they follow a relativiley
+close relation until prob 0.6 (approx) after having a high level of deviation as
+the sample does not follow the ideal exponential. This is in line with what
+we saw from the qqtest as the data points were scarce and not in the central range
+towards the end of the exponential quantiles.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
