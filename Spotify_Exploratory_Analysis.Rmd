@@ -1,5 +1,4 @@
 ---
-title: "MSCI 253 Lab 2"
 author: "Kanishk Dutta"
 date: "21/05/2021"
 output: pdf_document
